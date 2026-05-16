@@ -1,3 +1,4 @@
+import 'primeicons/primeicons.css' // 确保这一行在最前面或接近前面的位置
 import { createApp } from 'vue'
 import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura' // 引入 PrimeVue 4 的现代主题
