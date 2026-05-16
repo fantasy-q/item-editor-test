@@ -63,16 +63,16 @@
               class="p-datatable-sm modern-table" 
               responsiveLayout="scroll"
             >
-              <Column field="id" header="道具 ID" class="font-mono text-xs font-bold text-slate-400"></Column>
+              <Column field="id" header="道具 ID" class="font-mono text-xs font-bold text-slate-400" style="min-width: fit-content;"></Column>
               
-              <Column field="name" header="道具名称" class="font-bold text-slate-800" style="width: 25%">
+              <Column field="name" header="道具名称" class="font-bold text-slate-800" style="min-width: fit-content;" >
                 <template #body="{ data }">{{ data.name }}</template>
                 <template #editor="{ data }">
                   <InputText v-model="data.name" class="p-inputtext-sm w-full" />
                 </template>
               </Column>
               
-              <Column v-for="prop in database.schema" :key="prop.key" :field="'attributes.' + prop.key" :header="prop.label">
+              <Column v-for="prop in database.schema" :key="prop.key" :field="'attributes.' + prop.key" :header="prop.label" style="min-width: fit-content;" sortable>
                 <template #body="{ data }">
                   <span v-if="prop.type === 'boolean'">
                     <span v-if="data.attributes[prop.key]" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">TRUE</span>
@@ -87,15 +87,15 @@
                 </template>
 
                 <template #editor="{ data }">
-                  <InputNumber v-if="prop.type === 'number'" v-model="data.attributes[prop.key]" class="p-inputtext-sm w-full" />
-                  <InputText v-if="prop.type === 'string'" v-model="data.attributes[prop.key]" class="p-inputtext-sm w-full" />
-                  <ToggleSwitch v-if="prop.type === 'boolean'" v-model="data.attributes[prop.key]" class="p-toggleswitch-sm" />
+                  <InputNumber v-if="prop.type === 'number'" v-model="data.attributes[prop.key]" class="w-full h-6" inputClass="p-inputtext-sm w-full h-6 px-2 py-0.5 text-sm" style="min-width: fit-content;"/>
+                  <InputText v-if="prop.type === 'string'" v-model="data.attributes[prop.key]" class="p-inputtext-sm w-full h-6 px-2 py-0.5 text-sm" style="min-width: fit-content;"/>
+                  <ToggleSwitch v-if="prop.type === 'boolean'" v-model="data.attributes[prop.key]" class="p-toggleswitch-sm" style="min-width: fit-content;"/>
                 </template>
               </Column>
 
-              <Column :rowEditor="true" style="width: 6rem" bodyClass="text-center" header="编辑"></Column>
+              <Column :rowEditor="true" style="min-width: fit-content;" bodyClass="text-center" header="编辑"></Column>
               
-              <Column style="width: 3rem" header="删除">
+              <Column style="min-width: fit-content;" header="删除" >
                 <template #body="{ data }">
                   <Button icon="pi pi-trash" severity="danger" variant="text" size="small" class="text-slate-400 hover:text-rose-600" @click="deleteItem(data.id)" />
                 </template>
@@ -205,7 +205,16 @@ const database = ref<Database>({
   schema: [
     { key: "atk", label: "攻击力", type: "number", defaultValue: 0 },
     { key: "rarity", label: "稀有度", type: "string", defaultValue: "普通" },
-    { key: "isQuestItem", label: "任务道具", type: "boolean", defaultValue: false }
+    { key: "isQuestItem", label: "任务道具", type: "boolean", defaultValue: false },
+    { key: "attr0", label: "属性0", type: "number", defaultValue: 0 },
+    { key: "attr1", label: "属性1", type: "number", defaultValue: 0 },
+    { key: "attr2", label: "属性2", type: "number", defaultValue: 0 },
+    { key: "attr3", label: "属性3", type: "number", defaultValue: 0 },
+    { key: "attr4", label: "属性4", type: "number", defaultValue: 0 },
+    { key: "attr5", label: "属性5", type: "number", defaultValue: 0 },
+    { key: "attr6", label: "属性6", type: "number", defaultValue: 0 },
+    { key: "attr7", label: "属性7", type: "number", defaultValue: 0 },
+    { key: "attr8", label: "属性8", type: "number", defaultValue: 0 },
   ],
   items: [
     { id: "wpn_001", name: "烈焰魔剑", attributes: { atk: 125, rarity: "史诗", isQuestItem: false } },
@@ -243,17 +252,37 @@ const onRowEditSave = (event: any) => {
   database.value.items[index] = newData
 }
 
+// 在 App.vue 的 script 区域添加此函数
+
+const focusAndEditRow = (item: Item) => {
+  // 1. 瞬间切换到表格视图
+  currentLayout.value = 'list'
+  
+  // 2. 【核心修复】将当前卡片的数据对象，作为唯一元素赋给正在编辑的行数组
+  // 这样写可以立刻让表格中对应的这一行原地变成输入框状态
+  editingRows.value = [item]
+}
+
+// 升级版的添加新道具函数
 const addNewRow = () => {
   const newId = `item_${Date.now().toString().slice(-4)}`
   const defaultAttrs: Record<string, any> = {}
   database.value.schema.forEach(prop => { defaultAttrs[prop.key] = prop.defaultValue })
   
-  database.value.items.unshift({
+  const newItem: Item = {
     id: newId,
     name: "未命名新道具",
     attributes: defaultAttrs
-  })
-  currentLayout.value = 'list' // 添加时自动切回表格模式方便立刻原地编辑
+  }
+  
+  // 1. 推入数据首位
+  database.value.items.unshift(newItem)
+  
+  // 2. 自动切换到表格视图
+  currentLayout.value = 'list'
+  
+  // 3. 【精准联动】让这个刚刚诞生、位于第一的新道具直接进入编辑状态！
+  editingRows.value = [newItem]
 }
 
 const getRarityClass = (rarity: string) => {
@@ -331,5 +360,25 @@ const exportDatabase = () => {
 }
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* 追加到 App.vue 的 <style> 底部 */
+
+/* 强制行内编辑状态下的单元格去掉默认多余的 padding，使其与普通显示状态完全对齐 */
+.modern-table .p-datatable-tbody > tr > td {
+  padding: 10px 16px !important; /* 稍微压缩整体行高，让配表更紧凑 */
+}
+
+/* 精准控制表格内输入框的样式 */
+.modern-table .p-inputtext {
+  font-size: 13px !important;      /* 字体与普通文本一致 */
+  border-radius: 4px !important;   /* 微型圆角 */
+  border-color: #cbd5e1 !important; /* 淡淡的边框线 */
+}
+
+/* 当输入框获得焦点时，去掉 PrimeVue 夸张的蓝色扩散阴影，只保留克制的轻微边框变色 */
+.modern-table .p-inputtext:focus {
+  box-shadow: none !important;
+  border-color: #6366f1 !important; /* 聚焦时变成主题浅紫色 */
 }
 </style>
