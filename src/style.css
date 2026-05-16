@@ -1,4 +1,2 @@
 /* src/style.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss"; /* v4 的全新引入方式，一行搞定 */
